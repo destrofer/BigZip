@@ -41,7 +41,7 @@ class BigZip {
 	protected $entryCrc = 0;
 	
 	protected function __construct($fileName, $isWriteMode) {
-		if( $isWriteMode && !self::$handlerRegistered ) {
+		if( !self::$handlerRegistered ) {
 			stream_wrapper_register("bigzip", "BigZipStream")
 				or die("Failed to register bigzip stream wrapper");
 			stream_wrapper_register("bigzipint", "BigZipInternalStream")
