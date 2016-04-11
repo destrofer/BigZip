@@ -263,7 +263,7 @@ class BigZip {
 				$ds += fwrite($this->zipFile, pack('VvvvVVVVvva*', 
 					0x04034B50,					// ( 0) file entry identifier
 					20, 						// ( 4) version (0x0014)
-					0,							// ( 6) general purpose flags
+					0x0800,						// ( 6) general purpose flags
 					8, 							// ( 8) compression algorithm (0x0008)
 					$this->entryTime,			// (10) time in dos format
 					$this->entryCrc,			// (14) crc32 checksum
@@ -279,7 +279,7 @@ class BigZip {
 					0x02014B50,					// ( 0) index entry identifier
 					0,							// ( 4) version of creator?
 					20,							// ( 6) version (0x0014)
-					0,							// ( 8) general purpose flags
+					0x0800,						// ( 8) general purpose flags
 					8,							// (10) compression method (0x0008)
 					$this->entryTime,			// (12) time in dos format
 					$this->entryCrc,			// (16) crc32 checksum
