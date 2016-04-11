@@ -92,6 +92,11 @@ class BigZip {
 		return $zip->zipFile ? $zip : null;
 	}
 	
+	/**
+	 * Create new instance for writing
+	 * @param string $fileName
+	 * @return BigZip
+	 */
 	public static function openForWrite($fileName) {
 		$zip = new BigZip($fileName, true);
 		return $zip->zipFile ? $zip : null;
