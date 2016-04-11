@@ -39,6 +39,7 @@ class BigZip {
 	protected $entryAttribs = null;
 	protected $entrySize = 0;
 	protected $entryCrc = 0;
+	protected $entryCrcHasher = null;
 	
 	protected function __construct($fileName, $isWriteMode) {
 		if( !self::$handlerRegistered ) {
@@ -256,6 +257,8 @@ class BigZip {
 
 				$ds = 0;
 				
+				$this->crc32_finalize();
+				
 				// write file entry header (overwrites first 10 bytes of compressed data, since it must be cut off)
 				$ds += fwrite($this->zipFile, pack('VvvvVVVVvva*', 
 					0x04034B50,					// ( 0) file entry identifier
@@ -418,23 +421,22 @@ class BigZip {
 	
 	
 	protected function crc32_init() {
+		if ($this->entryCrcHasher) {
+			$this->crc32_finalize();
+		}
 		$this->entryCrc = 0xFFFFFFFF;
+		$this->entryCrcHasher = hash_init("crc32b");
+	}
+	
+	protected function crc32_finalize() {
+		if ($this->entryCrcHasher) {
+			$this->entryCrc = hexdec(hash_final($this->entryCrcHasher, false));
+		}
+		$this->entryCrcHasher = null;
 	}
 	
 	protected function crc32_add($str) {
-		$poly_reflected = 0xEDB88320;
-		$len = strlen($str);
-		$z = min(4, $len);
-		for($i = 0; $i < $z; $i++)
-			$this->entryCrc ^= ord($str[$i]) << $i * 8;
-		for($i = 4; $i < $len; $i++){
-			$next_char = ord($str[$i]);
-			for($j = 0; $j < 8; $j++)
-				$this->entryCrc = (($this->entryCrc >> 1 & 0x7FFFFFFF) | ($next_char >> $j & 1) << 0x1F) ^ ($this->entryCrc & 1) * $poly_reflected;
-		}
-		for($i = 0; $i < $z * 8; $i++)
-			$this->entryCrc = ($this->entryCrc >> 1 & 0x7FFFFFFF) ^ ($this->entryCrc & 1) * $poly_reflected;
-		$this->entryCrc = ~$this->entryCrc;
+		if ($this->entryCrcHasher) hash_update($this->entryCrcHasher, $str);
 	}
 	
 	public static function copyBytes($from, $to, $byteCount, $blockSize = 65536) {
