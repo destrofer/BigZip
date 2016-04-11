@@ -423,7 +423,38 @@ class BigZip {
 		return $bytes === $entry["size"];
 	}
 	
-	
+	/**
+	 * Adds entire dir contents recursively to archive
+	 * @param string|array $dir directory to be added or file tree diff file list
+	 * @param array $exclude list of file names to exclude
+	 * @param string $relPath internal var relative path to save in zip
+	 * @return boolean
+	 */
+	public function addDirContents($dir, array $exclude = null, $relPath = '') {
+		$dirPath = rtrim(trim((is_array($dir) ? $dir['base'] : $dir)), '/');
+		if (!is_dir($dirPath)) return false;
+		
+		if (is_array($dir)) {
+			foreach ($dir['+'] as $fileData) {
+				list($type, $file) = explode(':', $fileData);
+				if ($type != 'd') $this->addFile($dirPath.'/'.$file, ltrim(($relPath ? ($relPath.'/') : '').$file, '/'));
+			}
+		} else {
+			if (($dh = opendir($dirPath)) !== false) {
+				while (($file = readdir($dh)) !== false) {
+					if ($file == '.' || $file == '..') continue;
+					if (is_array($exclude) && in_array($file, $exclude)) continue;
+					if (is_dir($dirPath.'/'.$file)) {
+						$this->addDirContents($dirPath.'/'.$file, null, $relPath.'/'.$file);
+					} else if (is_file($dirPath.'/'.$file)) {
+						$this->addFile($dirPath.'/'.$file, ltrim(($relPath ? ($relPath.'/') : '').$file, '/'));
+					}
+				}
+				closedir($dh);
+			}
+		}
+		return true;
+	}
 	
 	protected function crc32_init() {
 		if ($this->entryCrcHasher) {
